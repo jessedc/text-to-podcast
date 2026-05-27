@@ -1,0 +1,10 @@
+.DS_Store
+
+# Generated audio artifacts
+*.wav
+*.m4a
+*.m4b
+
+# Personal input documents
+Books-Input/
+articles-input/
