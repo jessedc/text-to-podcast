@@ -1,22 +1,14 @@
-# Text to Podcast Claude Skill
+# Text to Podcast Agent Skill
 
-Turn a web article or PDF into a sideloadable `.m4a` podcast episode with embedded title, artist, description, and date metadata.
+An agent skill and workflow that generates high quality, mastered `.m4a` podcast episodes with embeded date, title, artist and description meta data from URLs, PDFs or plain text files. 
 
-## Installing this skill
+## Installing
 
 You can install this skill into Claude Code, Gemini, Cursor, and other agents that support the [Agent Skills](https://agentskills.io/home) format:
 
 ```bash
 npx skills add https://github.com/jessedc/text-to-podcast --skill text-to-podcast
 ```
-
-If you get the error `npx: command not found`, you need to install Node first:
-
-```bash
-brew install node
-```
-
-When using `npx`, you can select whether the skill should be installed just for one project or made available for all your projects.
 
 Alternatively, you can clone this repository or download a release and install it however you like.
 
@@ -26,7 +18,7 @@ Alternatively, you can clone this repository or download a release and install i
 brew install uv ffmpeg espeak-ng
 ```
 
-`docker` is only required for the URL → PDF step. If you start from a PDF or plain text, you can skip it.
+`docker` is required for the URL → PDF step. If you start from a PDF or plain text, you can skip it.
 
 Kokoro-82M voice weights (~315 MB) are downloaded to `~/.cache/huggingface` on the first TTS run.
 
@@ -49,7 +41,7 @@ If you already have a PDF, start at step 2. If you already have plain text, star
 
 You can also trigger the skill using natural language:
 
-> Use the Text to Podcast skill to turn this article into a podcast episode I can listen to on my walk.
+> Use the Text to Podcast skill to turn this article into a podcast episode.
 
 ## How It Works
 
