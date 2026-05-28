@@ -115,13 +115,17 @@ uv run --script scripts/wav2m4a.py <input.wav> <output.m4a> \
 
 If the description would exceed **500 characters**, write it to a file (e.g., `<slug>.desc.txt`) and pass `--description-file <path>` instead of `--description`. Short descriptions can be passed inline.
 
+By default this step also **masters** the audio: a voice EQ/compression chain plus two-pass loudness normalization to −16 LUFS (Apple Podcasts / EBU R128) with a −1.5 dBTP true-peak ceiling, then a 48 kHz resample. This is what makes the output sit at podcast loudness and sound produced rather than raw. See the module docstring in `scripts/wav2m4a.py` for the full chain. Pass `--no-master` to encode the WAV untouched.
+
 Other flags (with sensible defaults):
 
-| Flag        | Default                |
-| ----------- | ---------------------- |
-| `--album`   | same as `--title`      |
-| `--genre`   | `Podcast`              |
-| `--bitrate` | `64k` (mono spoken word) |
+| Flag           | Default                            |
+| -------------- | ---------------------------------- |
+| `--album`      | same as `--title`                  |
+| `--genre`      | `Podcast`                          |
+| `--bitrate`    | `128k`                             |
+| `--target-lufs`| `-16` (integrated loudness target) |
+| `--no-master`  | off (mastering on by default)      |
 
 ## Worked example
 
@@ -182,7 +186,7 @@ Use this decision tree to recover from failures without aborting the pipeline:
 - **`description` is too generic** — ask the agent to focus on the article's main thesis or unique angle.
 
 ### Step 6 (WAV → M4A)
-- **ffmpeg fails** — check disk space, try `--bitrate 48k` (lower than the 64k default), or pass `--bitrate 128k` for better quality on longer files.
+- **ffmpeg fails** — check disk space, lower `--bitrate` (e.g. `96k`), or try `--no-master` to isolate whether the mastering chain is the cause.
 - **Description too long for inline flag** — write it to `<slug>.desc.txt` and use `--description-file` (threshold: 500 characters).
 
 ### General

@@ -60,9 +60,24 @@ VOICES = [
 DEFAULT_VOICE = "af_heart"
 
 
+def _fade_edges(audio: np.ndarray, fade_ms: float = 15.0) -> np.ndarray:
+    # Ramp the first/last few ms to zero so the segment starts and ends on a
+    # zero-crossing. Kokoro's chunk boundaries land at arbitrary amplitudes;
+    # butting them straight against silence (or each other) steps the waveform
+    # and produces an audible click. A short linear fade removes that step.
+    n = int(SAMPLE_RATE * fade_ms / 1000.0)
+    if n == 0 or audio.size < 2 * n:
+        return audio
+    out = audio.copy()
+    ramp = np.linspace(0.0, 1.0, n, dtype=np.float32)
+    out[:n] *= ramp
+    out[-n:] *= ramp[::-1]
+    return out
+
+
 def synth(text: str, voice: str, speed: float) -> np.ndarray:
     pipeline = KPipeline(lang_code=voice[0])  # 'a' = American English, 'b' = British, etc.
-    chunks: list[np.ndarray] = []
+    segments: list[np.ndarray] = []
     # Split on blank lines so very long inputs don't blow up in one go.
     # Within a paragraph, collapse single newlines to spaces — PDF extraction
     # hard-wraps mid-sentence and Kokoro otherwise reads those as pauses.
@@ -71,11 +86,21 @@ def synth(text: str, voice: str, speed: float) -> np.ndarray:
 
     for i, para in enumerate(paragraphs, 1):
         print(f"[{i}/{len(paragraphs)}] {para[:60]}{'…' if len(para) > 60 else ''}", file=sys.stderr)
-        for _, _, audio in pipeline(para, voice=voice, speed=speed):
-            chunks.append(audio.numpy() if hasattr(audio, "numpy") else np.asarray(audio))
-        chunks.append(silence)
+        # Concatenate this paragraph's chunks into one continuous span, then fade
+        # only its outer edges. The intra-paragraph chunks are meant to be
+        # seamless speech, so we don't fade between them — only at the paragraph
+        # boundary, where the 0.4 s pause would otherwise create a click.
+        para_chunks = [
+            audio.numpy() if hasattr(audio, "numpy") else np.asarray(audio)
+            for _, _, audio in pipeline(para, voice=voice, speed=speed)
+        ]
+        if not para_chunks:
+            continue
+        para_audio = _fade_edges(np.concatenate(para_chunks))
+        segments.append(para_audio)
+        segments.append(silence)
 
-    return np.concatenate(chunks) if chunks else np.zeros(0, dtype=np.float32)
+    return np.concatenate(segments) if segments else np.zeros(0, dtype=np.float32)
 
 
 def main() -> int:
